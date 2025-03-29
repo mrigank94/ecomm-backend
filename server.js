@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
+const AWS = require("aws-sdk");
 require("dotenv").config();
 
 const app = express();
@@ -9,18 +10,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Create MySQL connection pool
+const signer = new AWS.RDS.Signer({
+  hostname: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  username: process.env.DB_USER,
+});
+
+const token = signer.getAuthToken();
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: token,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
 });
-
 // Convert pool to use promises
 const promisePool = pool.promise();
 
